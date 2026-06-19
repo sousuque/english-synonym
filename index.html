@@ -1,0 +1,1032 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>英語重要事項データベース</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Hiragino Sans", "Yu Gothic", sans-serif;
+    background: #f5f4f0;
+    color: #1a1a18;
+    font-size: 15px;
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+  header {
+    background: #fff;
+    border-bottom: 0.5px solid #dddbd2;
+    padding: 1.25rem 1.5rem;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  header h1 {
+    font-size: 18px;
+    font-weight: 500;
+    color: #1a1a18;
+    margin-bottom: 0.75rem;
+  }
+  .search-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 0.75rem;
+  }
+  .search-icon {
+    color: #888780;
+    flex-shrink: 0;
+    width: 18px;
+    height: 18px;
+  }
+  .search-bar input {
+    flex: 1;
+    font-size: 14px;
+    padding: 7px 12px;
+    border: 0.5px solid #b4b2a9;
+    border-radius: 8px;
+    background: #f5f4f0;
+    color: #1a1a18;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .search-bar input:focus { border-color: #5f5e5a; background: #fff; }
+  .filter-bar {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-bottom: 0.5rem;
+  }
+  .chip {
+    font-size: 12px;
+    padding: 4px 12px;
+    border-radius: 20px;
+    border: 0.5px solid #b4b2a9;
+    background: #fff;
+    cursor: pointer;
+    color: #5f5e5a;
+    transition: all 0.15s;
+    font-family: inherit;
+  }
+  .chip:hover { border-color: #5f5e5a; color: #1a1a18; }
+  .chip.active { background: #e6f1fb; color: #0c447c; border-color: #85b7eb; }
+  .stats {
+    font-size: 12px;
+    color: #888780;
+    padding: 0 0 0.25rem;
+  }
+  .header-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.75rem;
+  }
+  .header-top h1 {
+    margin-bottom: 0;
+  }
+  .btn-add {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 13px;
+    font-weight: 500;
+    padding: 6px 14px;
+    border-radius: 8px;
+    border: 0.5px solid #85b7eb;
+    background: #e6f1fb;
+    color: #0c447c;
+    cursor: pointer;
+    font-family: inherit;
+    transition: background 0.15s, border-color 0.15s;
+    flex-shrink: 0;
+  }
+  .btn-add:hover { background: #d0e6f7; border-color: #5a9fd4; }
+  .btn-add svg { width: 14px; height: 14px; }
+
+  /* ── モーダル ── */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(26,26,24,0.45);
+    z-index: 200;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: #fff;
+    border-radius: 16px;
+    width: 100%;
+    max-width: 520px;
+    max-height: 92vh;
+    overflow-y: auto;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.18);
+    padding: 1.5rem;
+  }
+  .modal-title {
+    font-size: 16px;
+    font-weight: 500;
+    color: #1a1a18;
+    margin-bottom: 1.25rem;
+  }
+  .field {
+    margin-bottom: 1rem;
+  }
+  .field label {
+    display: block;
+    font-size: 12px;
+    font-weight: 500;
+    color: #5f5e5a;
+    margin-bottom: 5px;
+  }
+  .field select,
+  .field input[type="text"],
+  .field textarea {
+    width: 100%;
+    font-size: 14px;
+    padding: 8px 12px;
+    border: 0.5px solid #b4b2a9;
+    border-radius: 8px;
+    background: #f5f4f0;
+    color: #1a1a18;
+    outline: none;
+    font-family: inherit;
+    transition: border-color 0.15s;
+  }
+  .field select:focus,
+  .field input[type="text"]:focus,
+  .field textarea:focus { border-color: #5f5e5a; background: #fff; }
+  .field textarea { resize: vertical; min-height: 90px; line-height: 1.6; }
+
+  /* itemsセクション */
+  .items-label {
+    font-size: 12px;
+    font-weight: 500;
+    color: #5f5e5a;
+    margin-bottom: 5px;
+  }
+  .items-hint {
+    font-size: 11px;
+    color: #b4b2a9;
+    margin-bottom: 8px;
+  }
+  .items-rows { display: flex; flex-direction: column; gap: 6px; }
+  .item-row {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+  }
+  .item-row input {
+    flex: 1;
+    font-size: 13px;
+    padding: 6px 10px;
+    border: 0.5px solid #b4b2a9;
+    border-radius: 8px;
+    background: #f5f4f0;
+    color: #1a1a18;
+    outline: none;
+    font-family: "SF Mono", "Fira Code", Consolas, monospace;
+    transition: border-color 0.15s;
+  }
+  .item-row input:focus { border-color: #5f5e5a; background: #fff; }
+  .btn-remove-item {
+    width: 26px; height: 26px;
+    display: flex; align-items: center; justify-content: center;
+    border: none; background: none; cursor: pointer;
+    color: #b4b2a9; border-radius: 6px; flex-shrink: 0;
+    transition: color 0.15s, background 0.15s;
+  }
+  .btn-remove-item:hover { color: #c0392b; background: #fef0ee; }
+  .btn-add-item {
+    font-size: 12px;
+    color: #0c447c;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px 0;
+    font-family: inherit;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: 4px;
+  }
+  .btn-add-item:hover { text-decoration: underline; }
+
+  /* タイプ切替 */
+  .type-toggle {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 1rem;
+  }
+  .type-btn {
+    flex: 1;
+    padding: 7px;
+    font-size: 13px;
+    border-radius: 8px;
+    border: 0.5px solid #b4b2a9;
+    background: #f5f4f0;
+    color: #5f5e5a;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.15s;
+    text-align: center;
+  }
+  .type-btn.active { background: #e6f1fb; color: #0c447c; border-color: #85b7eb; }
+
+  /* モーダルアクション */
+  .modal-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+    margin-top: 1.5rem;
+  }
+  .btn-cancel {
+    font-size: 14px;
+    padding: 8px 18px;
+    border-radius: 8px;
+    border: 0.5px solid #b4b2a9;
+    background: #fff;
+    color: #5f5e5a;
+    cursor: pointer;
+    font-family: inherit;
+    transition: background 0.15s;
+  }
+  .btn-cancel:hover { background: #f5f4f0; }
+  .btn-save {
+    font-size: 14px;
+    font-weight: 500;
+    padding: 8px 20px;
+    border-radius: 8px;
+    border: none;
+    background: #0c447c;
+    color: #fff;
+    cursor: pointer;
+    font-family: inherit;
+    transition: background 0.15s;
+  }
+  .btn-save:hover { background: #0a3869; }
+  .error-msg {
+    font-size: 12px;
+    color: #c0392b;
+    margin-top: 0.5rem;
+    display: none;
+  }
+  main {
+    max-width: 780px;
+    margin: 0 auto;
+    padding: 1rem 1rem 3rem;
+  }
+  .card {
+    background: #fff;
+    border: 0.5px solid #dddbd2;
+    border-radius: 12px;
+    padding: 1rem 1.25rem;
+    margin-bottom: 10px;
+    cursor: pointer;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  .card:hover { border-color: #888780; }
+  .card-header {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    justify-content: space-between;
+  }
+  .card-num {
+    font-size: 11px;
+    color: #b4b2a9;
+    min-width: 22px;
+    padding-top: 2px;
+    flex-shrink: 0;
+  }
+  .card-title {
+    font-size: 15px;
+    font-weight: 500;
+    color: #1a1a18;
+    flex: 1;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .badge {
+    font-size: 11px;
+    padding: 2px 9px;
+    border-radius: 10px;
+    white-space: nowrap;
+    font-weight: 400;
+  }
+  .badge-syn  { background: #eaf3de; color: #3b6d11; }
+  .badge-phrase { background: #faeeda; color: #633806; }
+  .badge-prep { background: #e6f1fb; color: #185fa5; }
+  .badge-gram { background: #eeedfe; color: #3c3489; }
+  .badge-constr { background: #faeeda; color: #633806; }
+  .badge-word { background: #e1f5ee; color: #085041; }
+  .chevron {
+    width: 16px;
+    height: 16px;
+    color: #b4b2a9;
+    margin-top: 2px;
+    flex-shrink: 0;
+    transition: transform 0.2s;
+  }
+  .card.open .chevron { transform: rotate(180deg); }
+  .card-body {
+    display: none;
+    margin-top: 10px;
+    border-top: 0.5px solid #dddbd2;
+    padding-top: 10px;
+  }
+  .card.open .card-body { display: block; }
+  .item-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 6px;
+  }
+  .item {
+    font-size: 12px;
+    padding: 3px 10px;
+    border-radius: 12px;
+    background: #f5f4f0;
+    color: #5f5e5a;
+    font-family: "SF Mono", "Fira Code", Consolas, monospace;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+    user-select: none;
+    position: relative;
+  }
+  .item:hover { background: #e6f1fb; color: #0c447c; }
+  .item.copied { background: #eaf3de; color: #3b6d11; }
+
+  /* カードアクションボタン（編集・削除） */
+  .card-actions {
+    display: flex;
+    gap: 4px;
+    margin-left: 6px;
+    flex-shrink: 0;
+  }
+  .card-action-btn {
+    width: 28px; height: 28px;
+    display: flex; align-items: center; justify-content: center;
+    border: 0.5px solid transparent;
+    border-radius: 7px;
+    background: none;
+    cursor: pointer;
+    color: #b4b2a9;
+    transition: color 0.15s, background 0.15s, border-color 0.15s;
+    flex-shrink: 0;
+  }
+  .card-action-btn:hover { color: #5f5e5a; background: #f5f4f0; border-color: #dddbd2; }
+  .card-action-btn.delete:hover { color: #c0392b; background: #fef0ee; border-color: #f5c2bb; }
+  .card-action-btn svg { width: 13px; height: 13px; pointer-events: none; }
+
+  /* コピートースト */
+  #copyToast {
+    position: fixed;
+    bottom: 28px;
+    left: 50%;
+    transform: translateX(-50%) translateY(10px);
+    background: #1a1a18;
+    color: #fff;
+    font-size: 13px;
+    padding: 8px 18px;
+    border-radius: 20px;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.2s, transform 0.2s;
+    z-index: 300;
+    white-space: nowrap;
+  }
+  #copyToast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  .sub-label {
+    font-size: 12px;
+    color: #5f5e5a;
+    margin-top: 10px;
+    margin-bottom: 2px;
+    font-weight: 500;
+  }
+  .note {
+    font-size: 13px;
+    color: #5f5e5a;
+    line-height: 1.75;
+    margin-top: 6px;
+    white-space: pre-wrap;
+  }
+  .empty {
+    text-align: center;
+    padding: 3rem;
+    color: #b4b2a9;
+    font-size: 14px;
+  }
+  @media (max-width: 600px) {
+    header { padding: 1rem; }
+    main { padding: 0.75rem 0.75rem 3rem; }
+    .card { padding: 0.875rem 1rem; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <div class="header-top">
+    <h1>英語重要事項データベース</h1>
+    <button class="btn-add" onclick="openModal()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      項目を追加
+    </button>
+  </div>
+  <div class="search-bar">
+    <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <input type="text" id="searchInput" placeholder="キーワードで検索（日本語・英語）..." oninput="render()">
+  </div>
+  <div class="filter-bar" id="filterBar"></div>
+  <div class="stats" id="stats"></div>
+</header>
+<main id="cards"></main>
+
+<!-- コピートースト -->
+<div id="copyToast"></div>
+
+<!-- 編集モーダル -->
+<div class="modal-overlay" id="editModalOverlay" onclick="handleEditOverlayClick(event)">
+  <div class="modal">
+    <div class="modal-title">項目を編集</div>
+
+    <div class="field">
+      <label>カテゴリ</label>
+      <select id="editCat">
+        <option>同意語表現</option>
+        <option>前置詞</option>
+        <option>文法</option>
+        <option>多義語</option>
+        <option>語法</option>
+        <option>語彙</option>
+        <option>重要構文</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label>タイトル（見出し）</label>
+      <input type="text" id="editTitle" placeholder="タイトル">
+    </div>
+
+    <div class="field">
+      <label>バッジ種別</label>
+      <select id="editBadge">
+        <option value="synonym">同意語</option>
+        <option value="phrase">重要表現</option>
+        <option value="prep">前置詞</option>
+        <option value="gram">文法</option>
+        <option value="constr">構文</option>
+        <option value="word">語法・多義</option>
+      </select>
+    </div>
+
+    <div class="type-toggle">
+      <button class="type-btn active" id="editTypeItems" onclick="switchEditType('items')">表現リスト</button>
+      <button class="type-btn" id="editTypeNote" onclick="switchEditType('note')">ノート（メモ）</button>
+    </div>
+
+    <div id="editSectionItems">
+      <div class="items-label">表現リスト</div>
+      <div class="items-hint">1行ずつ入力してください。右端の × で削除できます。</div>
+      <div class="items-rows" id="editItemsRows"></div>
+      <button class="btn-add-item" onclick="addEditItemRow()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        表現を追加
+      </button>
+    </div>
+
+    <div id="editSectionNote" style="display:none">
+      <div class="field">
+        <label>ノート</label>
+        <textarea id="editNote" placeholder="内容を入力（改行可）"></textarea>
+      </div>
+    </div>
+
+    <div class="error-msg" id="editErrorMsg"></div>
+
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeEditModal()">キャンセル</button>
+      <button class="btn-save" onclick="saveEditItem()">保存する</button>
+    </div>
+  </div>
+</div>
+
+<!-- 追加モーダル -->
+<div class="modal-overlay" id="modalOverlay" onclick="handleOverlayClick(event)">
+  <div class="modal">
+    <div class="modal-title">新しい項目を追加</div>
+
+    <div class="field">
+      <label>カテゴリ</label>
+      <select id="newCat">
+        <option>同意語表現</option>
+        <option>前置詞</option>
+        <option>文法</option>
+        <option>多義語</option>
+        <option>語法</option>
+        <option>語彙</option>
+        <option>重要構文</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label>タイトル（見出し）</label>
+      <input type="text" id="newTitle" placeholder="例：「〜に感謝する」">
+    </div>
+
+    <div class="field">
+      <label>バッジ種別</label>
+      <select id="newBadge">
+        <option value="synonym">同意語</option>
+        <option value="phrase">重要表現</option>
+        <option value="prep">前置詞</option>
+        <option value="gram">文法</option>
+        <option value="constr">構文</option>
+        <option value="word">語法・多義</option>
+      </select>
+    </div>
+
+    <div class="type-toggle">
+      <button class="type-btn active" id="typeItems" onclick="switchType('items')">表現リスト</button>
+      <button class="type-btn" id="typeNote" onclick="switchType('note')">ノート（メモ）</button>
+    </div>
+
+    <!-- 表現リスト入力 -->
+    <div id="sectionItems">
+      <div class="items-label">表現リスト</div>
+      <div class="items-hint">1行ずつ入力してください。右端の × で削除できます。</div>
+      <div class="items-rows" id="itemsRows"></div>
+      <button class="btn-add-item" onclick="addItemRow()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        表現を追加
+      </button>
+    </div>
+
+    <!-- ノート入力 -->
+    <div id="sectionNote" style="display:none">
+      <div class="field">
+        <label>ノート</label>
+        <textarea id="newNote" placeholder="内容を入力（改行可）"></textarea>
+      </div>
+    </div>
+
+    <div class="error-msg" id="errorMsg"></div>
+
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal()">キャンセル</button>
+      <button class="btn-save" onclick="saveItem()">追加する</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const data = [
+  {id:1,cat:"同意語表現",title:"「ときどき」",badge:"synonym",items:["sometimes","on occasion","occasionally","at times","at intervals","now and then","every now and then","now and again","every now and again","once in a while","from time to time","on and off"]},
+  {id:2,cat:"同意語表現",title:"「最終的に、結局」",badge:"synonym",items:["finally","eventually","ultimately","after all","at last","at length","in the end","in the long run","in the final resort","in the final analysis"]},
+  {id:3,cat:"前置詞",title:"「〜に関して、〜について」",badge:"prep",items:["concerning","regarding","respecting","as concerns","as regards","as respects","with regard to","with respect to","with relation to","with reference to","about","as to"]},
+  {id:4,cat:"前置詞",title:"「〜とは関係なく、〜に関わらず」",badge:"prep",items:["regardless of","irrespective of","with no regard to","with no respect to","with no relation to","with no reference to","without regard to","without respect to","without relation to","without reference to"]},
+  {id:5,cat:"同意語表現",title:"「〜する傾向がある」",badge:"synonym",items:["tend to V","have a tendency to V","be inclined to V","incline to V","have an inclination to V","be apt to V","be prone to V","be ready to V","be liable to V","be disposed to V"]},
+  {id:6,cat:"同意語表現",title:"「AにBを供給する」",badge:"phrase",items:["provide A with B","provide B for A","supply A with B","supply B for A","furnish A with B","furnish B to A","serve A with B","serve B to A","present A with B","present B to A"]},
+  {id:7,cat:"同意語表現",title:"「AとBを区別する」",badge:"phrase",items:["tell A from B","tell the difference between A and B","distinguish A from B","distinguish between A and B","differentiate A from B","differentiate between A and B","discriminate A from B","discriminate between A and B","discern A from B","discern between A and B"]},
+  {id:8,cat:"同意語表現",title:"「BのことでAを非難する・責める」",badge:"phrase",items:["blame A for B","blame B on A","criticize A on B","condemn A for B","accuse A of B","charge A with B","charge B on A"]},
+  {id:9,cat:"同意語表現",title:"「〜を確信している」",badge:"synonym",items:["be convinced that/of","be persuaded that/of","be sure that/of","be certain that/of","be confident that/of"]},
+  {id:10,cat:"同意語表現",title:"「AをBに制限する」",badge:"phrase",items:["limit A to B","restrict A to B","confine A to B"]},
+  {id:11,cat:"同意語表現",title:"「〜を引き起こす、もたらす」",badge:"synonym",items:["give rise to","give birth to","bring about","bring on","cause","be the cause of","result in","end in","lead to","generate","raise","produce"]},
+  {id:12,cat:"同意語表現",title:"「AをBに伝える」",badge:"phrase",items:["communicate A to B","convey A to B","transmit A to B","import A to B","pass on A to B"]},
+  {id:13,cat:"同意語表現",title:"「〜に影響を及ぼす」",badge:"synonym",items:["have an influence on","have an influence upon","influence","have an effect on","affect","have an impact on","impact"]},
+  {id:14,cat:"同意語表現",title:"「特に、とりわけ」",badge:"synonym",items:["above all","in particular","particularly","especially"]},
+  {id:15,cat:"同意語表現",title:"「さまざまな」",badge:"synonym",items:["a variety of","various","diverse","different"]},
+  {id:16,cat:"同意語表現",title:"「適切な、ふさわしい」",badge:"synonym",items:["appropriate","suitable","proper","fit"]},
+  {id:17,cat:"同意語表現",title:"「巨大な、莫大な」",badge:"synonym",items:["huge","vast","immense","tremendous","gigantic","enormous"]},
+  {id:18,cat:"同意語表現",title:"「たくさんの〜、多くの〜」",badge:"synonym",items:["a large number of","many","a large amount of","a large quantity of","much","a lot of","lots of","plenty of"]},
+  {id:19,cat:"同意語表現",title:"「Oが〜するのを妨げる」",badge:"phrase",items:["prevent O from Ving","keep O from Ving","stop O from Ving","hinder O from Ving","discourage O from Ving","bar O from Ving","deter O from Ving"],extra:[{label:"「Oが〜するのを禁ずる」",items:["prohibit O from Ving","ban O from Ving","inhibit O from Ving","forbid O to V"]}]},
+  {id:20,cat:"同意語表現",title:"「〜を思い出す」",badge:"synonym",items:["be reminded of","remind oneself of","think of","remember","recall","recollect","call 〜 to memory"]},
+  {id:21,cat:"同意語表現",title:"「〜を暗記する」",badge:"synonym",items:["learn 〜 by heart","know 〜 by heart","memorize"]},
+  {id:22,cat:"同意語表現",title:"「〜を心に留めておく」",badge:"synonym",items:["keep 〜 in mind","keep 〜 in memory","bear 〜 in mind","bear 〜 in memory","have 〜 in mind","have 〜 in memory"]},
+  {id:23,cat:"同意語表現",title:"「〜において役割を果たす」",badge:"phrase",items:["play a part in","play a role in"]},
+  {id:24,cat:"同意語表現",title:"「〜を利用する」",badge:"phrase",items:["make use of","take advantage of","avail oneself of","put 〜 to use","turn 〜 to use","put 〜 to account","turn 〜 to account","use","utilize","employ"],extra:[{label:"「最大限に利用する」",items:["make the most of"]},{label:"「不利な状況でも最大限に利用する」",items:["make the best of"]}]},
+  {id:25,cat:"同意語表現",title:"「〜を考慮する、〜を考慮に入れる」",badge:"phrase",items:["take account of","take 〜 into account","take 〜 into consideration","consider","allow for","make allowances for"]},
+  {id:26,cat:"同意語表現",title:"「〜をからかう」",badge:"synonym",items:["make fun of","make a fool of","make a mock of","play a joke on","play a trick on","poke fun at","ridicule","mock","tease","pull one's leg"]},
+  {id:27,cat:"同意語表現",title:"「尊敬する」／「見下す」",badge:"synonym",items:[],extra:[{label:"尊敬する",items:["look up to","respect","esteem","worship","admire"]},{label:"見下す",items:["look down on","despise","scorn"]}]},
+  {id:28,cat:"多義語",title:"give way の多義",badge:"word",note:"① 〜に道を譲る [to]\n② 〜に譲歩する [to] = concede to\n③ 〜に屈する [to] = give in to = yield to = submit to = surrender to\n④ 崩れる、崩壊する = collapse"},
+  {id:29,cat:"同意語表現",title:"「〜に出くわす」",badge:"synonym",items:["come across","run across","happen to meet","meet 〜 by chance","meet 〜 by accident","come into","run into","come upon","encounter","meet up with","meet with"]},
+  {id:30,cat:"同意語表現",title:"「〜を所有する」",badge:"synonym",items:["possess","own","have"]},
+  {id:31,cat:"同意語表現",title:"「私に関する限り」／「〜に関する限り」",badge:"synonym",items:[],extra:[{label:"私に関する限り",items:["As far as I am concerned","As far as I go","As for me","For my part"]},{label:"〜に関する限り",items:["As far as 〜 be concerned","As far as 〜 go"]}]},
+  {id:32,cat:"同意語表現",title:"「私の考えでは」",badge:"synonym",items:["in my opinion","to my thought","to my mind"]},
+  {id:33,cat:"前置詞",title:"「〜のため、〜のせいで」（理由）",badge:"prep",items:["because of","owing to","on account of","due to","by reason of","by virtue of","as a result of","as a consequence of","thanks to"]},
+  {id:34,cat:"前置詞",title:"「〜にも関わらず」（譲歩）",badge:"prep",items:["in spite of","despite","for all","with all","notwithstanding"]},
+  {id:35,cat:"多義語",title:"then の多義",badge:"word",note:"① 時「その時、その当時」= at the time\n② 条件「それなら、その場合」= in that case = on that occasion\n③ 結果「それ故、従って」= therefore = hence = and so\n④ 順序「それから」= next\n⑤ 添加「さらに、その上」= furthermore = moreover = besides = in addition = additionally = what is more = as well = likewise = equally = similarly"},
+  {id:36,cat:"多義語",title:"thus の多義",badge:"word",note:"① 「このように」= in this way\n② 「従って」= therefore = hence = and so\n③ 「たとえば」= for example = for instance = e.g.\n④ 「この程度まで」= to this degree = to this extent"},
+  {id:37,cat:"多義語",title:"otherwise の多義",badge:"word",note:"① さもなくば、その他の条件で\n② 別のやり方で、その他の方法で\n③ その他の点で"},
+  {id:38,cat:"多義語",title:"given の多義",badge:"word",note:"接続詞: ① もし〜ならば (if)　② 〜を考慮に入れると\n前置詞: ① もし〜ならば、〜と仮定すれば　② 〜を考慮に入れると\n形容詞: 与えられた、一定の"},
+  {id:39,cat:"多義語",title:"how の多義",badge:"word",note:"① 方法（動詞を修飾）\n② 理由（動詞を修飾）\n③ 程度（直後の形容詞か副詞を修飾）\n④ 状態（形容詞の代用として補語になる）"},
+  {id:40,cat:"多義語",title:"副詞 so の多義",badge:"word",note:"① 指示（直後の形容詞か副詞を修飾）\n② 強調 = very（直後の形容詞か副詞を修飾）\n③ 代用（形容詞の代用として補語になる）"},
+  {id:41,cat:"文法",title:"接続詞 as の多義（6用法）",badge:"gram",note:"① 時（主節とas節が一回限りの動作）\n② 様態（主節とas節が似たような関係）\n③ 原因・理由（主節とas節が因果関係）\n④ 比例・比率（継続的変化を表す）\n⑤ 譲歩（補語や副詞がas節より前に出る。名詞が補語の場合は無冠詞）\n⑥ 限定（as節の直前に名詞があり、その名詞を指す代名詞がas節内にある）"},
+  {id:42,cat:"文法",title:"that節内の訳さない should",badge:"gram",note:"意見・判断・感情を表す語の後に続く that節内に現れる should は訳さない。\n対象語: 当然・驚き・遺憾・主張・命令・要求・提案・決定"},
+  {id:43,cat:"文法",title:"現在時制の will の用法",badge:"gram",note:"① 推量\n② 固執\n③ 一般的傾向、習性\n④ 習慣、反復的行為\n⑤ 意志"},
+  {id:44,cat:"文法",title:"助動詞の過去形の用法",badge:"gram",note:"① 過去の意味（周りの動詞も過去の場合）\n② 仮定法（事実に反する事柄を述べる）\n③ 婉曲（断定を避けた控えめな表現）"},
+  {id:45,cat:"文法",title:"whatever の用法",badge:"gram",note:"関係代名詞: anything that（whateverが1語で名詞2つ分の働き）\n関係形容詞: any 〜 that（whatever+名詞で名詞2つ分の働き）\n疑問代名詞: no matter what（whateverが1語で名詞1つ分の働き）\n疑問形容詞: no matter what（whatever+名詞で名詞1つ分の働き）"},
+  {id:46,cat:"文法",title:"however の用法",badge:"gram",note:"① 直後にカンマがある → 「しかしながら」\n② 直後にカンマがない → 「たとえ〜だとしても」= no matter how（譲歩の副詞）"},
+  {id:47,cat:"文法",title:"引用符の用法",badge:"gram",note:"① セリフ\n② 引用\n③ 名詞化\n④ 強調\n⑤ 皮肉（irony）"},
+  {id:48,cat:"文法",title:"再帰代名詞の用法",badge:"gram",note:"再帰用法: 主語自身が目的語になって再び帰ってくる\n強意用法: 同じ人称の名詞・代名詞を強調する\n※ 構造上余ったら強意用法"},
+  {id:49,cat:"同意語表現",title:"「〜に専念する・没頭する・夢中になる」",badge:"phrase",items:["occupy oneself with","be occupied with","devote oneself to","be devoted to","bury oneself in","be buried in","involve oneself in","be involved in","engage oneself in","be engaged in","engage in","indulge oneself in","be indulged in","indulge in","addict oneself to","be addicted to","concentrate on","apply oneself to","be absorbed in","be keen on","be intent on","dedicate oneself to","be dedicated to","focus on"]},
+  {id:50,cat:"文法",title:"ダメ押しの副詞",badge:"gram",note:"① As 〜, so 〜（so は As節のダメ押しで訳さない）\n② If 〜, then 〜（then は if節のダメ押しで訳さない）\n③ Though 〜, yet 〜（yet は though節のダメ押しで訳さない）"},
+  {id:51,cat:"同意語表現",title:"「この機械はどこか故障している」",badge:"phrase",items:["There is something wrong with this machine.","Something is wrong with this machine.","This machine is wrong.","This machine is out of order."]},
+  {id:52,cat:"同意語表現",title:"「私のことは放っておいてくれ」（干渉無用）",badge:"phrase",items:["Mind your own business.","It is none of your business.","It is no business of yours.","Don't interfere in the affairs of mine."]},
+  {id:53,cat:"同意語表現",title:"「どうしたの？」",badge:"phrase",items:["What has happened to you?","What is wrong with you?","What is the matter with you?","What's up?"]},
+  {id:54,cat:"同意語表現",title:"「私はこの帽子を10ドルで買った」",badge:"phrase",items:["I bought this hat for ten dollars.","I paid ten dollars for this hat.","I spent ten dollars on this hat.","This hat cost me ten dollars."]},
+  {id:55,cat:"同意語表現",title:"「この本は読む価値がある」",badge:"phrase",items:["This book deserves reading.","This book deserves to be read.","This book is worth reading.","This book is worthy of being read.","It is worth while to read this book.","It is worth while reading this book.","This book is worth while to read."]},
+  {id:56,cat:"同意語表現",title:"「〜に頼る」",badge:"synonym",items:["depend on","count on","rely on","rest on","draw on","hang on","be dependent on","look to","turn to","resort to"]},
+  {id:57,cat:"同意語表現",title:"「〜から生じる」",badge:"synonym",items:["come from","arise from","derive from","spring from","stem from","result from","follow from","is derived from"]},
+  {id:58,cat:"同意語表現",title:"「〜に慣れる、〜に順応する」",badge:"synonym",items:["get used to","become used to","get accustomed to","become accustomed to","adapt oneself to","be adapted to","adapt to","adjust oneself to","be adjusted to","adjust to","accommodate oneself to","be accommodated to","accommodate to"]},
+  {id:59,cat:"同意語表現",title:"「AをBとみなす」",badge:"phrase",items:["regard A as B","look on A as B","think of A as B","conceive of A as B","consider A (as) B","see A as B","view A as B","take A as B"],extra:[{label:"関連表現",items:["define A as B（AをBと定義する）","refer to A as B（AをBと呼ぶ）","strike A as B（AにBという印象を与える）","impress A as B（AにBという印象を与える）"]}]},
+  {id:60,cat:"語法",title:"apply の用法",badge:"word",note:"apply A to B 「AをBに当てはめる」\napply to 「〜に当てはめる」\napply for 「〜に申し込む・志願する・応募する」\napplication:\n  ① 適用・応用・当てはめ\n  ② 申し込み・志願・応募\n  ③ 専念・集中"},
+  {id:61,cat:"同意語表現",title:"「〜に当てはまる」",badge:"synonym",items:["apply to","be applied to","be true of","hold true of","be the case with","be so with","go with","refer to"]},
+  {id:62,cat:"同意語表現",title:"「特に、とりわけ」（= No.14）",badge:"synonym",items:["particularly","in particular","especially","above all"]},
+  {id:63,cat:"同意語表現",title:"「あいまいな」",badge:"synonym",items:["ambiguous","vague","obscure","unclear"]},
+  {id:64,cat:"同意語表現",title:"「生まれながらにして、生来」",badge:"synonym",items:["naturally","innately","inherently","by nature","by birth","by temperament"]},
+  {id:65,cat:"多義語",title:"deliberately の多義",badge:"word",note:"① 故意に、わざと = on purpose = purposely = by intention = intentionally\n② 慎重に = carefully"},
+  {id:66,cat:"多義語",title:"at once ／ all at once の多義",badge:"word",note:"at once:\n  ① すぐに = immediately\n  ② 同時に = simultaneously = at the same time\nall at once: 「突然に」= suddenly = all of a sudden = out of the blue"},
+  {id:67,cat:"語法",title:"replace の用法",badge:"word",note:"S replace A by B = S replace A with B\n→「AをBと取りかえる」\n\nB replace A = B take the place of A = B substitute for A\n→「BはAに取って代わる」"},
+  {id:68,cat:"語法",title:"follow ／ precede の用法",badge:"word",note:"A follow B「AはBの後についていく、AはBに続いて起こる」\nB precede A = B be followed by A「BはAに先立つ」\n\n例: Tuesday follows Monday.\n  = Monday is followed by Tuesday.\n  = Monday precedes Tuesday."},
+  {id:69,cat:"語法",title:"result from ／ result in の用法",badge:"word",note:"A result from B「AはBから生じる」\nB result in A「Bは結果としてAになる、BはAを引き起こす」\n\n例: Illness often results from eating too much.\n  = Eating too much often results in illness."},
+  {id:70,cat:"語法",title:"be familiar with ／ to の用法",badge:"word",note:"A be familiar with B「AはBに精通している、AはBをよく知っている」\nB be familiar to A「BはAにとって馴染み深い、BはAによく知られている」\n\n例: He is familiar with English.\n  = English is familiar to him."},
+  {id:71,cat:"同意語表現",title:"「素晴らしい考えが思い浮かんだ」",badge:"phrase",items:["A bright idea occurred to me.","A bright idea struck me.","A bright idea hit me.","A bright idea flushed into my mind.","I struck on a bright idea.","I hit on a bright idea.","I thought of a bright idea.","I came up with a bright idea.","I conceived a bright idea."]},
+  {id:72,cat:"語彙",title:"反意語ペア",badge:"word",note:"cause - effect（原因 - 結果）\nends - means（目的 - 手段）\ndemand - supply（需要 - 供給）\nform - content（形式 - 内容）\ntheory - practice（理論 - 実践）\nabstract - concrete（抽象的 - 具体的）\nabsolute - relative（絶対的 - 相対的）\nsubjective - objective（主観的 - 客観的）\noptimistic - pessimistic（楽観的 - 悲観的）"},
+  {id:73,cat:"語法",title:"prepare の用法",badge:"word",note:"prepare for the examination\n→「試験に向けて準備した（試験勉強をした）」\n\nprepare the examination\n→「試験を準備した（試験問題を作った）」\n\nprepare students for the examination\n→「生徒たちに試験勉強をさせた」"},
+  {id:74,cat:"文法",title:"en- をつけると他動詞になる語",badge:"gram",note:"sharp → sharpen\ndeep → deepen\nlarge → enlarge\nable → enable\nlength → lengthen\nstrength → strengthen\ncourage → encourage\njoy → enjoy"},
+  {id:75,cat:"文法",title:"-ed をつけると「〜を持った」の形容詞になる",badge:"gram",note:"a talented man（才能を持った人）\na one-eyed monster（一つ目の怪物）\na skilled man（技術を持った人）"},
+  {id:76,cat:"文法",title:"-ible / -able は [可能]+[受動]",badge:"gram",note:"unreliable = cannot be relied on\nunbelievable = cannot be believed\nindispensable = cannot be dispensed with\n\nrespectful「礼儀正しい（敬意を表する）」\nvs. respectable「尊敬されるに値する = can be respected」\n\nintolerant「我慢できない（能動）」\nvs. intolerable「我慢できない（受動）= cannot be tolerated」"},
+  {id:"K1",cat:"重要構文",title:"親切構文（9通り）",badge:"constr",note:"「彼は親切にも私を助けてくれた。」\n① He was kind enough to help me.\n② He was so kind as to help me.\n③ He was so kind that he helped me.\n④ He had the kindness to help me.\n⑤ He was (very) kind to help me.\n⑥ It was (very) kind of him to help me.\n⑦ How kind he was to help me!\n⑧ How kind of him to help me!\n⑨ He kindly helped me."},
+  {id:"K2",cat:"重要構文",title:"列車構文（15通り）",badge:"constr",note:"「彼が駅に着くとすぐに列車が出発した。」\n① As soon as he arrived at the station, the train started.\n② On his arriving at the station, the train started.\n③ On his arrival at the station, the train started.\n④ He had no sooner arrived at the station than the train started.\n⑤ No sooner had he arrived at the station than the train started.\n⑥ He had hardly arrived at the station when (before) the train started.\n⑦ Hardly had he arrived at the station when (before) the train started.\n⑧ He had scarcely arrived at the station when (before) the train started.\n⑨ Scarcely had he arrived at the station when (before) the train started.\n⑩ The moment he arrived at the station, the train started.\n⑪ The instant he arrived at the station, the train started.\n⑫ The minute he arrived at the station, the train started.\n⑬ Immediately he arrived at the station, the train started.\n⑭ Directly he arrived at the station, the train started.\n⑮ Instantly he arrived at the station, the train started."},
+  {id:"K3",cat:"重要構文",title:"親父構文（4通り）",badge:"constr",note:"「私の親父が死んで10年になる。」\n① My father has been dead for ten years.\n② My father died ten years ago.\n③ It is ten years since my father died.\n④ Ten years have passed since my father died."},
+  {id:"K4",cat:"重要構文",title:"ドレス構文（4通り）",badge:"constr",note:"「彼女は白いドレスを着ている。」\n① She wears a white dress.\n② She is in a white dress.\n③ She has a white dress on.\n④ She is dressed in white."},
+  {id:"K5",cat:"重要構文",title:"喧嘩構文（4通り）",badge:"constr",note:"「彼らは会えば必ず喧嘩する。」\n① They can't meet without quarreling.\n② They can't meet but they quarrel.\n③ Whenever they meet, they quarrel.\n④ Every time they meet, they quarrel."},
+  {id:"K6",cat:"重要構文",title:"目的構文（7通り）",badge:"constr",note:"「彼は経済学を勉強するためにドイツへ行った。」\n① He went to Germany so as to study economics.\n② He went to Germany in order to study economics.\n③ He went to Germany so that he might study economics.\n④ He went to Germany in order that he might study economics.\n⑤ He went to Germany for the purpose of studying economics.\n⑥ He went to Germany with a view to studying economics.\n⑦ He went to Germany with the view of studying economics."}
+];
+
+const cats = ["すべて","同意語表現","前置詞","文法","多義語","語法","語彙","重要構文"];
+const badgeMap = {synonym:"badge-syn",phrase:"badge-phrase",prep:"badge-prep",gram:"badge-gram",constr:"badge-constr",word:"badge-word"};
+const badgeLabel = {synonym:"同意語",phrase:"重要表現",prep:"前置詞",gram:"文法",constr:"構文",word:"語法・多義"};
+let activeCat = "すべて";
+let openCards = new Set();
+
+function filterData() {
+  const q = document.getElementById("searchInput").value.toLowerCase().trim();
+  return data.filter(d => {
+    const catMatch = activeCat === "すべて" || d.cat === activeCat;
+    if (!q) return catMatch;
+    const fields = [d.title, d.cat, d.note || "", ...(d.items || []), ...((d.extra || []).flatMap(e => [e.label, ...e.items]))].join(" ").toLowerCase();
+    return catMatch && fields.includes(q);
+  });
+}
+
+const userAddedIds = new Set(); // ユーザーが追加した項目のID集合
+
+function copyText(text, el) {
+  navigator.clipboard.writeText(text).then(() => {
+    el.classList.add('copied');
+    setTimeout(() => el.classList.remove('copied'), 900);
+    showToast('コピーしました: ' + text);
+  });
+}
+
+let toastTimer = null;
+function showToast(msg) {
+  const t = document.getElementById('copyToast');
+  t.textContent = msg;
+  t.classList.add('show');
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 1800);
+}
+
+function render() {
+  const filtered = filterData();
+  document.getElementById("stats").textContent = `${filtered.length} 件 / 全${data.length}件`;
+  const container = document.getElementById("cards");
+  container.innerHTML = "";
+  if (!filtered.length) {
+    container.innerHTML = '<div class="empty">該当する項目が見つかりません</div>';
+    return;
+  }
+  filtered.forEach(d => {
+    const div = document.createElement("div");
+    div.className = "card" + (openCards.has(d.id) ? " open" : "");
+    const bClass = badgeMap[d.badge] || "badge-syn";
+    const bLabel = badgeLabel[d.badge] || "";
+
+    // コンテンツ本体
+    let bodyHTML = "";
+    if (d.items && d.items.length) {
+      bodyHTML += `<div class="item-list">${d.items.map(i => `<span class="item" title="クリックでコピー">${escHtml(i)}</span>`).join("")}</div>`;
+    }
+    if (d.extra) {
+      d.extra.forEach(e => {
+        bodyHTML += `<div class="sub-label">${escHtml(e.label)}</div><div class="item-list">${e.items.map(i => `<span class="item" title="クリックでコピー">${escHtml(i)}</span>`).join("")}</div>`;
+      });
+    }
+    if (d.note) {
+      bodyHTML += `<div class="note">${escHtml(d.note)}</div>`;
+    }
+
+    const chevronSVG = `<svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>`;
+
+    // 編集・削除ボタン（常に表示、削除はユーザー追加のみ）
+    const editBtn = `<button class="card-action-btn edit" title="編集" data-id="${d.id}" onclick="openEditModal(this.dataset.id, event)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>`;
+    const deleteBtn = userAddedIds.has(d.id)
+      ? `<button class="card-action-btn delete" title="削除" data-id="${d.id}" onclick="deleteItem(this.dataset.id, event)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg></button>`
+      : '';
+
+    div.innerHTML = `
+      <div class="card-header">
+        <span class="card-num">${d.id}</span>
+        <span class="card-title">${escHtml(d.title)}<span class="badge ${bClass}">${bLabel}</span></span>
+        <div class="card-actions">${editBtn}${deleteBtn}</div>
+        ${chevronSVG}
+      </div>
+      <div class="card-body">${bodyHTML}</div>`;
+
+    // カードの開閉（ボタンクリック時は伝播させない）
+    div.addEventListener("click", (e) => {
+      if (e.target.closest('.card-action-btn')) return;
+      if (e.target.closest('.item')) return;
+      if (openCards.has(d.id)) openCards.delete(d.id);
+      else openCards.add(d.id);
+      div.classList.toggle("open");
+      div.querySelector(".card-body").style.display = openCards.has(d.id) ? "block" : "none";
+    });
+
+    // itemクリックでコピー
+    div.querySelectorAll && setTimeout(() => {
+      div.querySelectorAll('.item').forEach(el => {
+        el.addEventListener('click', (e) => {
+          e.stopPropagation();
+          copyText(el.textContent, el);
+        });
+      });
+    }, 0);
+
+    if (openCards.has(d.id)) {
+      div.querySelector(".card-body").style.display = "block";
+    }
+    container.appendChild(div);
+  });
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+}
+
+function deleteItem(id, e) {
+  e.stopPropagation();
+  const numId = isNaN(id) ? id : Number(id);
+  if (!confirm('この項目を削除しますか？')) return;
+  const idx = data.findIndex(d => d.id == numId);
+  if (idx !== -1) {
+    data.splice(idx, 1);
+    userAddedIds.delete(numId);
+    render();
+  }
+}
+
+function renderFilters() {
+  const bar = document.getElementById("filterBar");
+  bar.innerHTML = "";
+  cats.forEach(c => {
+    const btn = document.createElement("button");
+    btn.className = "chip" + (activeCat === c ? " active" : "");
+    btn.textContent = c;
+    btn.addEventListener("click", () => { activeCat = c; renderFilters(); render(); });
+    bar.appendChild(btn);
+  });
+}
+
+renderFilters();
+render();
+
+/* ───── 追加モーダル ───── */
+let currentInputType = 'items';
+
+function openModal() {
+  currentInputType = 'items';
+  document.getElementById('typeItems').classList.add('active');
+  document.getElementById('typeNote').classList.remove('active');
+  document.getElementById('sectionItems').style.display = '';
+  document.getElementById('sectionNote').style.display = 'none';
+  document.getElementById('newTitle').value = '';
+  document.getElementById('newNote').value = '';
+  document.getElementById('errorMsg').style.display = 'none';
+  // アイテム行をリセット（3行初期表示）
+  const rows = document.getElementById('itemsRows');
+  rows.innerHTML = '';
+  for (let i = 0; i < 3; i++) addItemRow();
+  document.getElementById('modalOverlay').classList.add('open');
+}
+
+function closeModal() {
+  document.getElementById('modalOverlay').classList.remove('open');
+}
+
+function handleOverlayClick(e) {
+  if (e.target === document.getElementById('modalOverlay')) closeModal();
+}
+
+function switchType(type) {
+  currentInputType = type;
+  document.getElementById('typeItems').classList.toggle('active', type === 'items');
+  document.getElementById('typeNote').classList.toggle('active', type === 'note');
+  document.getElementById('sectionItems').style.display = type === 'items' ? '' : 'none';
+  document.getElementById('sectionNote').style.display = type === 'note' ? '' : 'none';
+}
+
+function addItemRow(value = '') {
+  const rows = document.getElementById('itemsRows');
+  const row = document.createElement('div');
+  row.className = 'item-row';
+  const inp = document.createElement('input');
+  inp.type = 'text';
+  inp.placeholder = '例: be grateful to';
+  inp.value = value;
+  const btn = document.createElement('button');
+  btn.className = 'btn-remove-item';
+  btn.title = '削除';
+  btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`;
+  btn.addEventListener('click', () => {
+    if (rows.children.length > 1) rows.removeChild(row);
+  });
+  row.appendChild(inp);
+  row.appendChild(btn);
+  rows.appendChild(row);
+  inp.focus();
+}
+
+function showError(msg) {
+  const el = document.getElementById('errorMsg');
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+
+function saveItem() {
+  document.getElementById('errorMsg').style.display = 'none';
+
+  const cat   = document.getElementById('newCat').value;
+  const title = document.getElementById('newTitle').value.trim();
+  const badge = document.getElementById('newBadge').value;
+
+  if (!title) { showError('タイトルを入力してください。'); return; }
+
+  // 新IDを生成（既存の最大数値IDより大きい番号）
+  const numIds = data.map(d => typeof d.id === 'number' ? d.id : 0);
+  const newId  = Math.max(...numIds) + 1;
+
+  const entry = { id: newId, cat, title, badge };
+
+  if (currentInputType === 'items') {
+    const inputs = document.querySelectorAll('#itemsRows .item-row input');
+    const items  = Array.from(inputs).map(i => i.value.trim()).filter(Boolean);
+    if (!items.length) { showError('表現を1つ以上入力してください。'); return; }
+    entry.items = items;
+  } else {
+    const note = document.getElementById('newNote').value.trim();
+    if (!note) { showError('ノートの内容を入力してください。'); return; }
+    entry.note = note;
+  }
+
+  data.push(entry);
+  userAddedIds.add(newId);
+  // 追加したカテゴリに切り替えて表示
+  activeCat = cat;
+  renderFilters();
+  render();
+  // 追加したカードまでスクロール
+  setTimeout(() => {
+    const allCards = document.querySelectorAll('#cards .card');
+    if (allCards.length) allCards[allCards.length - 1].scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, 50);
+  closeModal();
+}
+
+/* ───── 編集モーダル ───── */
+let editingId = null;
+let currentEditInputType = 'items';
+
+function openEditModal(rawId, e) {
+  e.stopPropagation();
+  const id = isNaN(rawId) ? rawId : Number(rawId);
+  const d = data.find(x => x.id == id);
+  if (!d) return;
+  editingId = id;
+
+  document.getElementById('editCat').value = d.cat;
+  document.getElementById('editTitle').value = d.title;
+  document.getElementById('editBadge').value = d.badge;
+  document.getElementById('editErrorMsg').style.display = 'none';
+
+  const hasNote = !!d.note;
+  currentEditInputType = hasNote ? 'note' : 'items';
+  document.getElementById('editTypeItems').classList.toggle('active', !hasNote);
+  document.getElementById('editTypeNote').classList.toggle('active', hasNote);
+  document.getElementById('editSectionItems').style.display = hasNote ? 'none' : '';
+  document.getElementById('editSectionNote').style.display = hasNote ? '' : 'none';
+
+  // items行を設定
+  const rows = document.getElementById('editItemsRows');
+  rows.innerHTML = '';
+  const allItems = [...(d.items || []), ...((d.extra || []).flatMap(e => e.items))];
+  if (allItems.length) {
+    allItems.forEach(v => addEditItemRow(v));
+  } else {
+    addEditItemRow();
+  }
+
+  document.getElementById('editNote').value = d.note || '';
+  document.getElementById('editModalOverlay').classList.add('open');
+}
+
+function closeEditModal() {
+  document.getElementById('editModalOverlay').classList.remove('open');
+  editingId = null;
+}
+
+function handleEditOverlayClick(e) {
+  if (e.target === document.getElementById('editModalOverlay')) closeEditModal();
+}
+
+function switchEditType(type) {
+  currentEditInputType = type;
+  document.getElementById('editTypeItems').classList.toggle('active', type === 'items');
+  document.getElementById('editTypeNote').classList.toggle('active', type === 'note');
+  document.getElementById('editSectionItems').style.display = type === 'items' ? '' : 'none';
+  document.getElementById('editSectionNote').style.display = type === 'note' ? '' : 'none';
+}
+
+function addEditItemRow(value = '') {
+  const rows = document.getElementById('editItemsRows');
+  const row = document.createElement('div');
+  row.className = 'item-row';
+  const inp = document.createElement('input');
+  inp.type = 'text';
+  inp.placeholder = '例: be grateful to';
+  inp.value = value;
+  const btn = document.createElement('button');
+  btn.className = 'btn-remove-item';
+  btn.title = '削除';
+  btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`;
+  btn.addEventListener('click', () => {
+    if (rows.children.length > 1) rows.removeChild(row);
+  });
+  row.appendChild(inp);
+  row.appendChild(btn);
+  rows.appendChild(row);
+}
+
+function saveEditItem() {
+  document.getElementById('editErrorMsg').style.display = 'none';
+  const cat   = document.getElementById('editCat').value;
+  const title = document.getElementById('editTitle').value.trim();
+  const badge = document.getElementById('editBadge').value;
+  if (!title) {
+    const el = document.getElementById('editErrorMsg');
+    el.textContent = 'タイトルを入力してください。';
+    el.style.display = 'block';
+    return;
+  }
+  const idx = data.findIndex(d => d.id == editingId);
+  if (idx === -1) return;
+
+  const entry = { id: editingId, cat, title, badge };
+  if (currentEditInputType === 'items') {
+    const inputs = document.querySelectorAll('#editItemsRows .item-row input');
+    const items  = Array.from(inputs).map(i => i.value.trim()).filter(Boolean);
+    if (!items.length) {
+      const el = document.getElementById('editErrorMsg');
+      el.textContent = '表現を1つ以上入力してください。';
+      el.style.display = 'block';
+      return;
+    }
+    entry.items = items;
+  } else {
+    const note = document.getElementById('editNote').value.trim();
+    if (!note) {
+      const el = document.getElementById('editErrorMsg');
+      el.textContent = 'ノートの内容を入力してください。';
+      el.style.display = 'block';
+      return;
+    }
+    entry.note = note;
+  }
+
+  data[idx] = entry;
+  openCards.add(editingId); // 編集後は開いた状態で表示
+  render();
+  closeEditModal();
+  showToast('保存しました');
+}
+</script>
+</body>
+</html>
